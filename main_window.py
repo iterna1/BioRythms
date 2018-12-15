@@ -1,29 +1,21 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
-from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtCore import Qt
+
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
+from style import Style
 
 
-class MainWindow(QWidget):
+class MenuWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.stl = Style(self)
         self.initUI()
 
     def initUI(self):
         self.setFixedSize(259, 160)
-        self.setStyleSheet('QWidget{background-color: #F5F5DC;}')
-        self.setWindowIcon(QIcon('icon.png'))
-        self.setWindowTitle('BioRythms')
+        self.stl.get_background_style()
 
-        label = QLabel('Добро пожаловать в BioRythms', self)
-        label.setStyleSheet('QLabel{color: #8B0000;}')
-        label.setFont(QFont('Calibri', 13, QFont.Bold))
-        label.adjustSize()
-
-        button = QPushButton('Старт', self)
-        button.setStyleSheet('QPushButton{background-color: #8B0000; color: #F5F5DD}')
-        button.setFont(QFont('Consolas', 12, QFont.Bold))
-        label.adjustSize()
+        label = self.stl.get_label_style('Добро пожаловать в BioRythms', 13)
+        button = self.stl.get_button_style('Старт', 12)
 
         vbox = QVBoxLayout(self)
         vbox.addWidget(label)
@@ -36,13 +28,16 @@ class MainWindow(QWidget):
         pass
 
 
+def start():
+    pass
 
-if __name__ == '__main__':
+
+def main():
     app = QApplication(sys.argv)
-    mw = MainWindow()
+    mw = MenuWindow()
     mw.show()
     sys.exit(app.exec())
 
 
-
-
+if __name__ == '__main__':
+    main()

@@ -1,8 +1,8 @@
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QLabel, QPushButton
+from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox
 
 
-class Style():
+class Style:
     def __init__(self, obj):
         self.obj = obj
 
@@ -24,3 +24,10 @@ class Style():
         label.setFont(QFont('Calibri', font, QFont.Bold))
         label.adjustSize()
         return label
+
+    def get_checkbox_style(self, text, font):
+        check_box = QCheckBox(text, self.obj)
+        check_box.setStyleSheet('QCheckBox{color: #8B0000;}')
+        check_box.setFont(QFont('Consolas', font, QFont.Bold))
+        check_box.adjustSize()
+        return check_box
