@@ -11,8 +11,9 @@ class Style:
 
     def get_button_style(self, text, font):
         button = QPushButton(text, self.obj)
-        button.setStyleSheet('QPushButton{background-color: #8B0000; color: #F5F5DD;} '
-                             'QPushButton:pressed { background-color: rgb(0, 255, 0);')
+        button.setStyleSheet('QPushButton:hover { background-color: #A52A2A }'
+                             'QPushButton:!hover { background-color: #A52A2A }'
+                             'QPushButton:pressed { background-color: #8B0000; }')
         button.setFont(QFont('Consolas', font, QFont.Bold))
         button.adjustSize()
         return button
@@ -53,7 +54,7 @@ class Style:
 
     def get_date_edit_style(self, font):
         datedit = QDateEdit(self.obj)
-        datedit.setStyleSheet('QDateEdit{background-color: #F5F5DD; color: #000000;}')
+        datedit.setStyleSheet('QDateEdit{color: #000000;}')
         datedit.setFont(QFont('Consolas', font, QFont.Bold))
         return datedit
 
