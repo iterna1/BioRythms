@@ -42,8 +42,8 @@ class Style:
 
     def get_line_edit_style(self, font):
         line = QLineEdit(self.obj)
-        line.setStyleSheet('QLineEdit{color: #8B0000;}')
-        line.setFont(QFont('Consolas', font))
+        line.setStyleSheet('QLineEdit{color: #000000;}')
+        line.setFont(QFont('Consolas', font, QFont.Bold))
         return line
 
     def get_box_style(self, box, *widgets):
@@ -54,6 +54,6 @@ class Style:
 
     def get_date_edit_style(self, font):
         datedit = QDateEdit(self.obj)
-        datedit.setStyleSheet('QDateEdit{background-color: #F5F5DD; color: #8B0000;}')
-        datedit.setFont(QFont('Consolas', font))
+        datedit.setStyleSheet('QDateEdit{background-color: #F5F5DD; color: #000000;}')
+        datedit.setFont(QFont('Consolas', font, QFont.Bold))
         return datedit
