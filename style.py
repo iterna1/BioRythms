@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget
+from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget, QLineEdit, QDateEdit
 
 
 class Style:
@@ -39,3 +39,21 @@ class Style:
         tabs.adjustSize()
         tabs.setStyleSheet('QTabWidget{background-color: #F5F5DD;}')
         return tabs
+
+    def get_line_edit_style(self, font):
+        line = QLineEdit(self.obj)
+        line.setStyleSheet('QLineEdit{color: #8B0000;}')
+        line.setFont(QFont('Consolas', font))
+        return line
+
+    def get_box_style(self, box, *widgets):
+        layout = box(self.obj)
+        for i in widgets:
+            layout.addWidget(i)
+        return layout
+
+    def get_date_edit_style(self, font):
+        datedit = QDateEdit(self.obj)
+        datedit.setStyleSheet('QDateEdit{background-color: #F5F5DD; color: #8B0000;}')
+        datedit.setFont(QFont('Consolas', font))
+        return datedit
