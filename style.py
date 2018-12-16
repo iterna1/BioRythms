@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget, QLineEdit, QDateEdit
+from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget, QLineEdit, QDateEdit, QFrame
 
 
 class Style:
@@ -55,3 +55,11 @@ class Style:
         datedit.setStyleSheet('QDateEdit{background-color: #F5F5DD; color: #000000;}')
         datedit.setFont(QFont('Consolas', font, QFont.Bold))
         return datedit
+
+    def get_line_style(self, pos):
+        line = QFrame()
+        line.setFrameShape(pos)
+        line.setFrameShadow(QFrame.Sunken)
+        return line
+
+

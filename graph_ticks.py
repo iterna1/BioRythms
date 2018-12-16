@@ -2,6 +2,10 @@ import datetime
 import math
 
 
+def get_current_date():
+    return list(map(int, str(datetime.datetime.now()).split()[0].split('-')))[::-1]
+
+
 class Ticks:
     def __init__(self, days):
         self.days = range(days)
@@ -11,20 +15,26 @@ class Ticks:
     def physical(self):
         result = []
         for day in self.days:
-            result.append(math.sin((2 * self.pi * day) / self.phases[0]) * 100)
+            result.append((math.sin((2 * self.pi * day) / self.phases[0]) * 100))
         return result
 
     def emotional(self):
         result = []
         for day in self.days:
-            result.append(math.sin((2 * self.pi * day) / self.phases[1]) * 100)
+            result.append((math.sin((2 * self.pi * day) / self.phases[1]) * 100))
         return result
 
     def intellectual(self):
         result = []
         for day in self.days:
-            result.append(math.sin((2 * self.pi * day) / self.phases[2]) * 100)
+            result.append((math.sin((2 * self.pi * day) / self.phases[2]) * 100))
         return result
+
+    def average(self):
+        result = (self.physical()[-1] +
+                  self.emotional()[-1] +
+                  self.intellectual()[-1]) / 3
+        return float(result)
 
 
 class TimeDelta:
@@ -33,8 +43,8 @@ class TimeDelta:
         self.current_date = self.get_date(current_date)
         self.delta = self.get_delta()
 
-    def get_date(self, birth_date):
-        return datetime.datetime(*list(birth_date)[::-1])
+    def get_date(self, date):
+        return datetime.datetime(*list(date)[::-1])
 
     def get_delta(self):
         return self.current_date - self.birth_date

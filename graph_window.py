@@ -2,8 +2,8 @@ import sys
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout
-from graph_ticks import TimeDelta, Ticks
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout, QFrame
+from graph_ticks import TimeDelta, Ticks, get_current_date
 from pyqtgraph import PlotWidget
 from style import Style
 
@@ -71,27 +71,34 @@ class SetupTab(QWidget):
     def __init__(self):
         super().__init__()
         self.stl = Style(self)
-        self.initUi()
+        self.initUI()
         self.set_data()
 
-    def initUi(self):
-        self.check_box = [self.stl.get_label_style('Отображать:', 20),
-                          self.stl.get_checkbox_style('Физический биоритм', 16, 'green'),
-                          self.stl.get_checkbox_style('Эмоциональный биоритм', 16, 'red'),
-                          self.stl.get_checkbox_style('Интеллектуальный биоритм', 16, 'blue'),
-                          self.stl.get_checkbox_style('Среднее значение', 16, 'black'),
-                          self.stl.get_button_style('Построить', 16)]
-        self.edit_box = [self.stl.get_label_style('Введите ваше имя:', 16),
-                         self.stl.get_line_edit_style(16),
-                         self.stl.get_label_style('[*]Введите дату рождения: ', 16),
-                         self.stl.get_date_edit_style(16),
-                         self.stl.get_label_style('[*]Введите дату прогноза:', 16),
-                         self.stl.get_date_edit_style(16)]
+    def initUI(self):
+        self.check_box = [self.stl.get_label_style('Отображать:', 30),
+                          self.stl.get_checkbox_style('Физический биоритм', 18, 'green'),
+                          self.stl.get_checkbox_style('Эмоциональный биоритм', 18, 'red'),
+                          self.stl.get_checkbox_style('Интеллектуальный биоритм', 18, 'blue'),
+                          self.stl.get_checkbox_style('Среднее значение', 18, 'black'),
+                          self.stl.get_button_style('Построить', 18)]
+        self.edit_box = [self.stl.get_label_style('Введите ваше имя:', 18),
+                         self.stl.get_line_edit_style(18),
+                         self.stl.get_label_style('[*]Введите дату рождения: ', 18),
+                         self.stl.get_date_edit_style(18),
+                         self.stl.get_label_style('[*]Введите дату прогноза:', 18),
+                         self.stl.get_date_edit_style(18)]
+        lines = [self.stl.get_line_style(QFrame.HLine),
+                 self.stl.get_line_style(QFrame.VLine),
+                 self.stl.get_line_style(QFrame.HLine)]
 
         gsetupbox_layout = self.stl.get_box_style(QGridLayout)
+        gsetupbox_layout.addWidget(lines[0], 0, 0, 2, 8)
+        gsetupbox_layout.addWidget(lines[1], 1, 2, 7, 1)
         for i in range(len(self.check_box)):
-            gsetupbox_layout.addWidget(self.check_box[i], i, 0)
-            gsetupbox_layout.addWidget(self.edit_box[i], i, 1)
+            gsetupbox_layout.addWidget(self.check_box[i], i + 1, 0)
+            gsetupbox_layout.addWidget(self.edit_box[i], i + 1, 5)
+        gsetupbox_layout.addWidget(lines[2], 7, 0, 2, 8)
+
 
         self.setLayout(gsetupbox_layout)
         self.check_box[5].clicked.connect(self.set_data)
@@ -115,49 +122,71 @@ class GraphTab(QWidget):
         self.initUI()
 
     def initUI(self):
-        statement = [self.stl.get_label_style('Ваше текущее физическое состояние%s: %f'
-                                              % (self.user_name, self.phys), 14),
-                     self.stl.get_label_style('Ваше текущее эмоциональное состояние%s: %f'
-                                              % (self.user_name, self.emo), 14),
-                     self.stl.get_label_style('Ваше текущее интеллектуальное состояние%s: %f'
-                                              % (self.user_name, self.intel), 14)]
-
-
         self.gbox_layout = self.stl.get_box_style(QGridLayout)
         self.draw(self.data)
-        for i in range(len(statement)):
-            self.gbox_layout.addWidget(statement[i], i + 1, 0)
 
     def define_vars(self, data):
-        self.phys = 50
-        self.emo = 25
-        self.intel = 0
         if data['name'] != '':
-            self.user_name = ', ' + data['name']
+            self.user_name = data['name'].capitalize() + ', твой'
         else:
-            self.user_name = data['name']
+            self.user_name = 'Ваш'
+        self.draw_phys = data['phys']
+        self.draw_emo = data['emo']
+        self.draw_intel = data['intel']
         birth_date = list(map(int, data['birth_date'].split('.')))
         forecast_date = list(map(int, data['forecast_date'].split('.')))
-        self.td = TimeDelta(birth_date, forecast_date)
-        self.delta = self.td.get_delta()
-        self.ticks = Ticks(self.delta.days)
+
+        self.forecast_date_delta = TimeDelta(birth_date, forecast_date).get_delta()
+        self.ticks = Ticks(self.forecast_date_delta.days)
+        self.current_date_delta = TimeDelta(birth_date, get_current_date()).get_delta()
+        self.todays_ticks = Ticks(self.current_date_delta.days)
+
+        if self.ticks.days:
+            # значения в прогнозируемый день
+            self.f_phys = self.ticks.physical()[-1]
+            self.f_emo = self.ticks.emotional()[-1]
+            self.f_intel = self.ticks.intellectual()[-1]
+            self.f_avrg = self.ticks.average()
+            # значения сегодня
+            self.c_phys = self.todays_ticks.physical()[-1]
+            self.c_emo = self.todays_ticks.emotional()[-1]
+            self.c_intel = self.todays_ticks.intellectual()[-1]
+            self.c_avrg = self.todays_ticks.average()
+        else:
+            # значения в прогнозируемый день
+            self.f_phys = 0
+            self.f_emo = 0
+            self.f_intel = 0
+            self.f_avrg = 0
+            # значения сегодня
+            self.c_phys = 0
+            self.c_emo = 0
+            self.c_intel = 0
+            self.c_avrg = 0
 
     def draw(self, data):
         self.define_vars(data)
         graphicsView = PlotWidget(self)
-        graphicsView.plot(range(self.delta.days), self.ticks.physical(), pen='g')
-        graphicsView.plot(range(self.delta.days), self.ticks.emotional(), pen='r')
-        graphicsView.plot(range(self.delta.days), self.ticks.intellectual(), pen='b')
+        graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.physical(), pen='g')
+        graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.emotional(), pen='r')
+        graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.intellectual(), pen='b')
+        statement = [self.stl.get_label_style('%s прогноз на сегодня:'
+                                              % self.user_name, 14),
+                     self.stl.get_label_style('Физическое состояние: %f %s'
+                                              % (self.c_phys, '%'), 14),
+                     self.stl.get_label_style('Эмоциональное состояние: %f %s'
+                                              % (self.c_emo, '%'), 14),
+                     self.stl.get_label_style('Интеллектуальное состояние: %f %s'
+                                              % (self.c_intel, '%'), 14),
+                     self.stl.get_label_style('Среднее значение: %f %s'
+                                              % (self.c_avrg, '%'), 14)]
+        for i in range(len(statement)):
+            self.gbox_layout.addWidget(statement[i], i + 1, 0)
         self.gbox_layout.addWidget(graphicsView, 0, 0)
-
-
-class Communicate(Exception):
-    pass
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    c = Communicate()
     mw = MainWindow()
     mw.show()
     sys.exit(app.exec())
