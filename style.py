@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget, QLineEdit, QDateEdit
 
 
@@ -8,8 +8,6 @@ class Style:
 
     def get_background_style(self):
         self.obj.setStyleSheet('QWidget{background-color: #F5F5DC;}')
-        self.obj.setWindowIcon(QIcon('icon.png'))
-        self.obj.setWindowTitle('BioRythms')
 
     def get_button_style(self, text, font):
         button = QPushButton(text, self.obj)

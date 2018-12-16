@@ -2,62 +2,39 @@ import datetime
 import math
 
 
-class BadDateFormat(Exception):
-    pass
-
-
 class Ticks:
     def __init__(self, days):
-        self.days = days
+        self.days = range(days)
         self.pi = math.pi
         self.phases = (23, 28, 33)
 
     def physical(self):
-        return math.sin((2 * self.pi * self.days) / self.phases[0]) * 100
+        result = []
+        for day in self.days:
+            result.append(math.sin((2 * self.pi * day) / self.phases[0]) * 100)
+        return result
 
     def emotional(self):
-        return math.sin((2 * self.pi * self.days) / self.phases[1]) * 100
+        result = []
+        for day in self.days:
+            result.append(math.sin((2 * self.pi * day) / self.phases[1]) * 100)
+        return result
 
     def intellectual(self):
-        return math.sin((2 * self.pi * self.days) / self.phases[2]) * 100
+        result = []
+        for day in self.days:
+            result.append(math.sin((2 * self.pi * day) / self.phases[2]) * 100)
+        return result
 
 
 class TimeDelta:
     def __init__(self, birth_date, current_date):
-        self.birth_date = self.birth_date(birth_date)
-        self.current_date = self.current_date(current_date)
+        self.birth_date = self.get_date(birth_date)
+        self.current_date = self.get_date(current_date)
         self.delta = self.get_delta()
 
-    def birth_date(self, birth_date):
-        try:
-            if birth_date.count('/') != 2:
-                raise BadDateFormat
-
-            birth_date = birth_date.split('/')
-
-            if not ''.join(birth_date).isdigit():
-                raise BadDateFormat
-            birth_date = map(int, birth_date)
-
-        except BadDateFormat:
-            raise BadDateFormat('Введите дату в формате ДД/ММ/ГГГГ')
-        else:
-            return datetime.datetime(*list(birth_date)[::-1])
-
-    def current_date(self, current_date):
-        try:
-            if current_date.count('/') != 2:
-                raise BadDateFormat
-            current_date = current_date.split('/')
-
-            if not ''.join(current_date).isdigit():
-                raise BadDateFormat
-            current_date = map(int, current_date)
-
-        except BadDateFormat:
-            raise BadDateFormat('Введите дату в формате ДД/ММ/ГГГГ')
-        else:
-            return datetime.datetime(*list(current_date)[::-1])
+    def get_date(self, birth_date):
+        return datetime.datetime(*list(birth_date)[::-1])
 
     def get_delta(self):
         return self.current_date - self.birth_date
@@ -67,9 +44,7 @@ class TimeDelta:
 
 
 def main():
-    birth_d = input('Введите дату рождения (D/Y/M): ')
-    current_d = input('Введите дату прогноза (D/Y/M): ')
-    td = TimeDelta(birth_d, current_d)
+    td = TimeDelta([12, 3, 2002], [16, 12, 2018])
     days = td.get_delta().days
     now = Ticks(days)
     print(now.physical())
