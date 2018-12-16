@@ -11,14 +11,15 @@ class Style:
 
     def get_button_style(self, text, font):
         button = QPushButton(text, self.obj)
-        button.setStyleSheet('QPushButton{background-color: #8B0000; color: #F5F5DD}')
+        button.setStyleSheet('QPushButton{background-color: #8B0000; color: #F5F5DD;} '
+                             'QPushButton:pressed { background-color: rgb(0, 255, 0);')
         button.setFont(QFont('Consolas', font, QFont.Bold))
         button.adjustSize()
         return button
 
-    def get_label_style(self, text, font):
+    def get_label_style(self, text, font, color='#8B0000'):
         label = QLabel(text, self.obj)
-        label.setStyleSheet('QLabel{color: #8B0000;}')
+        label.setStyleSheet('QLabel{color: %s;}' % color)
         label.setFont(QFont('Calibri', font, QFont.Bold))
         label.adjustSize()
         return label

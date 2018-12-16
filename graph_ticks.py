@@ -31,10 +31,13 @@ class Ticks:
         return result
 
     def average(self):
-        result = (self.physical()[-1] +
-                  self.emotional()[-1] +
-                  self.intellectual()[-1]) / 3
-        return float(result)
+        result = []
+        phys = self.physical()
+        emo = self.emotional()
+        intel = self.intellectual()
+        for i in self.days:
+            result.append((phys[i] + emo[i] + intel[i]) / 3)
+        return result
 
 
 class TimeDelta:

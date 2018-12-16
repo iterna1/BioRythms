@@ -39,7 +39,6 @@ class TableWidget(QWidget):
         self.setLayout(layout)
         self.st.check_box[5].clicked.connect(self.change_graph)
 
-
     def change_graph(self):
         self.data = self.st.data
         self.gt.draw(self.data)
@@ -80,7 +79,7 @@ class SetupTab(QWidget):
                           self.stl.get_checkbox_style('Эмоциональный биоритм', 18, 'red'),
                           self.stl.get_checkbox_style('Интеллектуальный биоритм', 18, 'blue'),
                           self.stl.get_checkbox_style('Среднее значение', 18, 'black'),
-                          self.stl.get_button_style('Построить', 18)]
+                          self.stl.get_button_style('Задать', 18)]
         self.edit_box = [self.stl.get_label_style('Введите ваше имя:', 18),
                          self.stl.get_line_edit_style(18),
                          self.stl.get_label_style('[*]Введите дату рождения: ', 18),
@@ -95,8 +94,13 @@ class SetupTab(QWidget):
         gsetupbox_layout.addWidget(lines[0], 0, 0, 2, 8)
         gsetupbox_layout.addWidget(lines[1], 1, 2, 7, 1)
         for i in range(len(self.check_box)):
-            gsetupbox_layout.addWidget(self.check_box[i], i + 1, 0)
-            gsetupbox_layout.addWidget(self.edit_box[i], i + 1, 5)
+            try:
+                self.check_box[i].setAlignment(Qt.AlignHCenter)
+            except AttributeError:
+                pass
+            finally:
+                gsetupbox_layout.addWidget(self.check_box[i], i + 1, 0)
+                gsetupbox_layout.addWidget(self.edit_box[i], i + 1, 5)
         gsetupbox_layout.addWidget(lines[2], 7, 0, 2, 8)
 
 
@@ -110,7 +114,7 @@ class SetupTab(QWidget):
                      'phys': self.check_box[1].isChecked(),
                      'emo': self.check_box[2].isChecked(),
                      'intel': self.check_box[3].isChecked(),
-                     'average': self.check_box[4].isChecked()}
+                     'avrg': self.check_box[4].isChecked()}
 
 
 class GraphTab(QWidget):
@@ -133,6 +137,7 @@ class GraphTab(QWidget):
         self.draw_phys = data['phys']
         self.draw_emo = data['emo']
         self.draw_intel = data['intel']
+        self.draw_avrg = data['avrg']
         birth_date = list(map(int, data['birth_date'].split('.')))
         forecast_date = list(map(int, data['forecast_date'].split('.')))
 
@@ -146,12 +151,12 @@ class GraphTab(QWidget):
             self.f_phys = self.ticks.physical()[-1]
             self.f_emo = self.ticks.emotional()[-1]
             self.f_intel = self.ticks.intellectual()[-1]
-            self.f_avrg = self.ticks.average()
+            self.f_avrg = self.ticks.average()[-1]
             # значения сегодня
             self.c_phys = self.todays_ticks.physical()[-1]
             self.c_emo = self.todays_ticks.emotional()[-1]
             self.c_intel = self.todays_ticks.intellectual()[-1]
-            self.c_avrg = self.todays_ticks.average()
+            self.c_avrg = self.todays_ticks.average()[-1]
         else:
             # значения в прогнозируемый день
             self.f_phys = 0
@@ -166,23 +171,67 @@ class GraphTab(QWidget):
 
     def draw(self, data):
         self.define_vars(data)
-        graphicsView = PlotWidget(self)
-        graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.physical(), pen='g')
-        graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.emotional(), pen='r')
-        graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.intellectual(), pen='b')
-        statement = [self.stl.get_label_style('%s прогноз на сегодня:'
-                                              % self.user_name, 14),
-                     self.stl.get_label_style('Физическое состояние: %f %s'
-                                              % (self.c_phys, '%'), 14),
-                     self.stl.get_label_style('Эмоциональное состояние: %f %s'
-                                              % (self.c_emo, '%'), 14),
-                     self.stl.get_label_style('Интеллектуальное состояние: %f %s'
-                                              % (self.c_intel, '%'), 14),
-                     self.stl.get_label_style('Среднее значение: %f %s'
-                                              % (self.c_avrg, '%'), 14)]
-        for i in range(len(statement)):
-            self.gbox_layout.addWidget(statement[i], i + 1, 0)
-        self.gbox_layout.addWidget(graphicsView, 0, 0)
+        self.statement_forecast_day, self.statement_today, self.graphicsView = self.configure_graph()
+        if not self.graphicsView:
+            self.graphicsView = self.stl.get_label_style((self.user_name.rstrip('твой').rstrip('Ваш') +
+                                                    'укажи параметры (в предыдущей вкладке)')
+                                                    .capitalize(), 24)
+            self.graphicsView.setAlignment(Qt.AlignCenter)
+        self.gbox_layout.addWidget(self.graphicsView, 0, 0, 4, 10)
+        k = 0
+        for f, t in zip(self.statement_forecast_day, self.statement_today):
+            try:
+                f.setAlignment(Qt.AlignCenter)
+                t.setAlignment(Qt.AlignCenter)
+            except AttributeError:
+                pass
+            finally:
+                self.gbox_layout.addWidget(f, 5, k)
+                self.gbox_layout.addWidget(t, 6, k)
+            k += 1
+
+    def configure_graph(self):
+        statement_today = []
+        statement_forecast_day = []
+        graphicsView = []
+        if self.draw_phys:
+            statement_today.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                   [self.stl.get_label_style('%f %s' % (self.c_phys, '%'), 12, color='green')])
+            statement_forecast_day.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                          [self.stl.get_label_style('%f %s' % (self.f_phys, '%'), 12, color='green')])
+        if self.draw_emo:
+            statement_today.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                   [self.stl.get_label_style('%f %s' % (self.c_emo, '%'), 12, color='red')], )
+            statement_forecast_day.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                          [self.stl.get_label_style('%f %s' % (self.f_emo, '%'), 12, color='red')])
+        if self.draw_intel:
+            statement_today.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                   [self.stl.get_label_style('%f %s' % (self.c_intel, '%'), 12, color='blue')])
+            statement_forecast_day.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                          [self.stl.get_label_style('%f %s' % (self.f_intel, '%'), 12, color='blue')])
+        if self.draw_avrg:
+            statement_today.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                   [self.stl.get_label_style('%f %s' % (self.c_avrg, '%'), 12, color='black')])
+            statement_forecast_day.extend([self.stl.get_line_style(QFrame.VLine)] +
+                                   [self.stl.get_label_style('%f %s' % (self.f_avrg, '%'), 12, color='black')])
+
+        if len(statement_today) > 4:
+            graphicsView = PlotWidget(self)
+            if self.draw_phys:
+                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.physical(), pen='g')
+            if self.draw_emo:
+                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.emotional(), pen='r')
+            if self.draw_intel:
+                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.intellectual(), pen='b')
+            if self.draw_avrg:
+                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.average(), pen='w')
+            statement_today = [self.stl.get_label_style('%s прогноз на сегодня'
+                                                        % self.user_name, 12)] + statement_today
+            statement_forecast_day = [self.stl.get_label_style('%s прогноз на указанную дату'
+                                                               % self.user_name, 12)] + statement_forecast_day
+            statement_today.append(self.stl.get_line_style(QFrame.VLine))
+            statement_forecast_day.append(self.stl.get_line_style(QFrame.VLine))
+        return statement_forecast_day, statement_today, graphicsView
 
 
 if __name__ == '__main__':
