@@ -9,18 +9,19 @@ class Style:
     def get_background_style(self):
         self.obj.setStyleSheet('QWidget{background-color: #F5F5DC;}')
 
-    def get_button_style(self, text, font):
+    def get_button_style(self, text, font, bgc_color='#8B0000', bgs_color='#A52A2A', txt_color='#F5F5DC'):
         button = QPushButton(text, self.obj)
-        button.setStyleSheet('QPushButton:hover { background-color: #A52A2A }'
-                             'QPushButton:!hover { background-color: #A52A2A }'
-                             'QPushButton:pressed { background-color: #8B0000; }')
+        button.setStyleSheet("""QPushButton:hover {background-color: %s; color: %s}
+                             QPushButton:!hover {background-color: %s; color: %s}
+                             QPushButton:pressed {background-color: %s; color: %s}""" %
+                             (bgs_color, txt_color, bgs_color, txt_color, bgc_color, txt_color))
         button.setFont(QFont('Consolas', font, QFont.Bold))
         button.adjustSize()
         return button
 
-    def get_label_style(self, text, font, color='#8B0000'):
+    def get_label_style(self, text, font, color='#8B0000', bg_color='#F5F5DC'):
         label = QLabel(text, self.obj)
-        label.setStyleSheet('QLabel{color: %s;}' % color)
+        label.setStyleSheet('QLabel{color: %s; background-color: %s;}' % (color, bg_color))
         label.setFont(QFont('Calibri', font, QFont.Bold))
         label.adjustSize()
         return label

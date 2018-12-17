@@ -1,11 +1,14 @@
 import sys
 
+import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout, QFrame
 from graph_ticks import TimeDelta, Ticks, get_current_date
-from pyqtgraph import PlotWidget
 from style import Style
+
+pg.setConfigOption('background', '#F5F5DC')
+pg.setConfigOption('foreground', '#A52A2A')
 
 
 class MainWindow(QMainWindow):
@@ -41,7 +44,7 @@ class TableWidget(QWidget):
 
     def change_graph(self):
         self.data = self.st.data
-        self.gt.draw(self.data)
+        self.gt.initUI(self.data)
 
 
 class MenuTab(QWidget):
@@ -55,9 +58,8 @@ class MenuTab(QWidget):
         label.setAlignment(Qt.AlignCenter)
         guide_btn = self.stl.get_button_style('О BioRythms', 42)
         bior_btn = self.stl.get_button_style('О биоритмах', 42)
-        wtf_btn = self.stl.get_button_style('О значениях', 42)
 
-        vbox = self.stl.get_box_style(QVBoxLayout, label, guide_btn, bior_btn, wtf_btn)
+        vbox = self.stl.get_box_style(QVBoxLayout, label, guide_btn, bior_btn)
         self.setLayout(vbox)
         guide_btn.clicked.connect(self.programm_info)
 
@@ -76,17 +78,17 @@ class SetupTab(QWidget):
         self.set_data()
 
     def initUI(self):
-        self.check_box = [self.stl.get_label_style('[*]Отображать:', 30),
-                          self.stl.get_checkbox_style('Физический биоритм', 18, 'green'),
-                          self.stl.get_checkbox_style('Эмоциональный биоритм', 18, 'red'),
-                          self.stl.get_checkbox_style('Интеллектуальный биоритм', 18, 'blue'),
-                          self.stl.get_checkbox_style('Среднее значение', 18, 'black'),
+        self.check_box = [self.stl.get_button_style('[*]Отображать:', 30),
+                          self.stl.get_checkbox_style(' Физический биоритм', 18, 'green'),
+                          self.stl.get_checkbox_style(' Эмоциональный биоритм', 18, 'red'),
+                          self.stl.get_checkbox_style(' Интеллектуальный биоритм', 18, 'blue'),
+                          self.stl.get_checkbox_style(' Среднее значение', 18, 'black'),
                           self.stl.get_button_style('Задать', 18)]
-        self.edit_box = [self.stl.get_label_style('Введите ваше имя:', 18),
+        self.edit_box = [self.stl.get_button_style('Ваше имя:', 18),
                          self.stl.get_line_edit_style(18),
-                         self.stl.get_label_style('[*]Введите дату рождения: ', 18),
+                         self.stl.get_button_style('[*]Дата рождения: ', 18),
                          self.stl.get_date_edit_style(18),
-                         self.stl.get_label_style('[*]Введите дату прогноза:', 18),
+                         self.stl.get_button_style('[*]Дата прогноза:', 18),
                          self.stl.get_date_edit_style(18)]
         lines = [self.stl.get_line_style(QFrame.HLine),
                  self.stl.get_line_style(QFrame.VLine),
@@ -120,126 +122,113 @@ class SetupTab(QWidget):
 class GraphTab(QWidget):
     def __init__(self, data):
         super().__init__()
-        self.data = data
         self.define_vars(data)
         self.stl = Style(self)
-        self.initUI()
-
-    def initUI(self):
         self.gbox_layout = self.stl.get_box_style(QGridLayout)
-        self.draw(self.data)
+        self.initUI(data)
+
+    def initUI(self, data):
+        self.define_vars(data)
+        statement_forecast_day, statement_today, self.graphics_view = self.configure_graph()
+        self.gbox_layout.addWidget(self.graphics_view, 0, 0, 3, 9)
+        k = 0
+        for f, t in zip(statement_forecast_day, statement_today):
+            self.gbox_layout.addWidget(f, 6, k)
+            self.gbox_layout.addWidget(t, 7, k)
+            k += 1
 
     def define_vars(self, data):
-        if data['name'] != '':
-            self.user_name = data['name'].capitalize() + ', твой'
-        else:
-            self.user_name = 'Ваш'
+        self.user_name = data['name'].capitalize()
         self.draw_phys = data['phys']
         self.draw_emo = data['emo']
         self.draw_intel = data['intel']
         self.draw_avrg = data['avrg']
-        birth_date = list(map(int, data['birth_date'].split('.')))
-        forecast_date = list(map(int, data['forecast_date'].split('.')))
+        self.birth_date = list(map(int, data['birth_date'].split('.')))
+        self.forecast_date = list(map(int, data['forecast_date'].split('.')))
 
-        self.forecast_date_delta = TimeDelta(birth_date, forecast_date).get_delta()
+        self.forecast_date_delta = TimeDelta(self.birth_date, self.forecast_date).get_delta()
         self.ticks = Ticks(self.forecast_date_delta.days)
-        self.current_date_delta = TimeDelta(birth_date, get_current_date()).get_delta()
+        self.current_date = get_current_date()
+        self.current_date_delta = TimeDelta(self.birth_date, self.current_date).get_delta()
         self.todays_ticks = Ticks(self.current_date_delta.days)
 
-        if self.ticks.days:
-            # значения в прогнозируемый день
+        # значения в прогнозируемый день
+        if self.ticks.discrets:
             self.f_phys = self.ticks.physical()[-1]
             self.f_emo = self.ticks.emotional()[-1]
             self.f_intel = self.ticks.intellectual()[-1]
             self.f_avrg = self.ticks.average()[-1]
-            # значения сегодня
+        else:
+            self.f_phys = 0
+            self.f_emo = 0
+            self.f_intel = 0
+            self.f_avrg = 0
+        # значения сегодня
+        if self.todays_ticks.discrets:
             self.c_phys = self.todays_ticks.physical()[-1]
             self.c_emo = self.todays_ticks.emotional()[-1]
             self.c_intel = self.todays_ticks.intellectual()[-1]
             self.c_avrg = self.todays_ticks.average()[-1]
         else:
-            # значения в прогнозируемый день
-            self.f_phys = 0
-            self.f_emo = 0
-            self.f_intel = 0
-            self.f_avrg = 0
-            # значения сегодня
             self.c_phys = 0
             self.c_emo = 0
             self.c_intel = 0
             self.c_avrg = 0
 
-    def draw(self, data):
-        self.define_vars(data)
-        self.statement_forecast_day, self.statement_today, self.graphicsView = self.configure_graph()
-        self.graphicsView.setAlignment(Qt.AlignCenter)
-        self.gbox_layout.addWidget(self.graphicsView, 0, 0, 4, 10)
-        k = 0
-        for f, t in zip(self.statement_forecast_day, self.statement_today):
-            f.setAlignment(Qt.AlignCenter)
-            t.setAlignment(Qt.AlignCenter)
-            self.gbox_layout.addWidget(f, 5, k)
-            self.gbox_layout.addWidget(t, 6, k)
-            k += 2
-
     def configure_graph(self):
+        t_c, bg_c, bg_s, g_bg, r_bg, b_bg, k_bg, k_c, b_c, r_c, g_c = ('#F5F5DD' for i in range(11))
         if self.draw_phys:
-            g_c = 'green'
-        else:
-            g_c = '#F5F5DD'
+            g_c = '#006400'
+            g_bg = '#8FBC8F'
         if self.draw_emo:
-            r_c = 'red'
-        else:
-            r_c = '#F5F5DD'
+            r_c = '#8B0000'
+            r_bg = '#FA8072'
         if self.draw_intel:
-            b_c = 'blue'
-        else:
-            b_c = '#F5F5DD'
+            b_c = '#483D8B'
+            b_bg = '#B0E0E6'
         if self.draw_avrg:
-            w_c = '#808000'
-        else:
-            w_c = '#F5F5DD'
-        if any((self.draw_phys, self.draw_emo, self.draw_intel, self.draw_avrg)):
-            l_c = '#8B0000'
-        else:
-            l_c = '#F5F5DD'
+            k_c = 'black'
+            k_bg = '#A9A9A9'
 
-        statement_today = [self.stl.get_label_style('%s прогноз на сегодня' % self.user_name, 12,
-                                                    color=l_c),
-                           self.stl.get_label_style('%f %s' % (self.c_phys, '%'), 12,
-                                                    color=g_c),
-                           self.stl.get_label_style('%f %s' % (self.c_emo, '%'), 12,
-                                                    color=r_c),
-                           self.stl.get_label_style('%f %s' % (self.c_intel, '%'), 12,
-                                                    color=b_c),
-                           self.stl.get_label_style('%f %s' % (self.c_avrg, '%'), 12,
-                                                    color=w_c)]
+        statement_today = [self.stl.get_button_style('.'.join([str(i) for i in self.current_date]), 14),
+                           self.stl.get_button_style(' %f %s ' % (self.c_phys, '%'), 12,
+                                                     bgc_color=b_bg, bgs_color=g_bg, txt_color=g_c),
+                           self.stl.get_button_style(' %f %s ' % (self.c_emo, '%'), 12,
+                                                     bgc_color=b_bg, bgs_color=r_bg, txt_color=r_c),
+                           self.stl.get_button_style(' %f %s ' % (self.c_intel, '%'), 12,
+                                                     bgc_color=b_bg, bgs_color=b_bg, txt_color=b_c),
+                           self.stl.get_button_style(' %f %s ' % (self.c_avrg, '%'), 12,
+                                                     bgc_color=b_bg, bgs_color=k_bg, txt_color=k_c)]
 
-        statement_forecast_day = [self.stl.get_label_style('%s прогноз на указанную дату' % self.user_name, 12,
-                                                           color=l_c),
-                                  self.stl.get_label_style('%f %s' % (self.f_phys, '%'), 12,
-                                                           color=g_c),
-                                  self.stl.get_label_style('%f %s' % (self.f_emo, '%'), 12,
-                                                           color=r_c),
-                                  self.stl.get_label_style('%f %s' % (self.f_intel, '%'), 12,
-                                                           color=b_c),
-                                  self.stl.get_label_style('%f %s' % (self.f_avrg, '%'), 12,
-                                                           color=w_c)]
+        statement_forecast_day = [self.stl.get_button_style('.'.join([str(i) for i in self.forecast_date]), 14),
+                                  self.stl.get_button_style(' %f %s ' % (self.f_phys, '%'), 12,
+                                                            bgc_color=b_bg, bgs_color=g_bg, txt_color=g_c),
+                                  self.stl.get_button_style(' %f %s ' % (self.f_emo, '%'), 12,
+                                                            bgc_color=r_bg, bgs_color=r_bg, txt_color=r_c),
+                                  self.stl.get_button_style(' %f %s ' % (self.f_intel, '%'), 12,
+                                                            bgc_color=b_bg, bgs_color=b_bg, txt_color=b_c),
+                                  self.stl.get_button_style(' %f %s ' % (self.f_avrg, '%'), 12,
+                                                            bgc_color=k_bg, bgs_color=k_bg, txt_color=k_c)]
 
-        if any((self.draw_avrg, self.draw_emo, self.draw_intel, self.draw_phys)):
-            graphicsView = PlotWidget(self)
-            if self.draw_phys:
-                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.physical(), pen='g')
-            if self.draw_emo:
-                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.emotional(), pen='r')
-            if self.draw_intel:
-                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.intellectual(), pen='b')
-            if self.draw_avrg:
-                graphicsView.plot(range(self.forecast_date_delta.days), self.ticks.average(), pen='y')
+        graphics_view = pg.PlotWidget(self)
+        if self.draw_phys:
+            graphics_view.plot(self.ticks.discrets, self.ticks.physical(), pen='g')
+        if self.draw_emo:
+            graphics_view.plot(self.ticks.discrets, self.ticks.emotional(), pen='r')
+        if self.draw_intel:
+            graphics_view.plot(self.ticks.discrets, self.ticks.intellectual(), pen='b')
+        if self.draw_avrg:
+            graphics_view.plot(self.ticks.discrets, self.ticks.average(), pen='k')
+        return statement_forecast_day, statement_today, graphics_view
+
+    def info(self):
+        txt = self.sender().color()
+        if txt == 'Какие?':
+            pass
+        elif txt == 'Куда я попал?':
+            pass
         else:
-            graphicsView = self.stl.get_label_style((self.user_name.rstrip('твой').rstrip('Ваш') +
-                                                     'укажи параметры (в предыдущей вкладке)').capitalize(), 24)
-        return statement_forecast_day, statement_today, graphicsView
+            pass
 
 
 if __name__ == '__main__':

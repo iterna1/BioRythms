@@ -8,26 +8,26 @@ def get_current_date():
 
 class Ticks:
     def __init__(self, days):
-        self.days = range(days)
+        self.discrets = range(0, days)
         self.pi = math.pi
         self.phases = (23, 28, 33)
 
     def physical(self):
         result = []
-        for day in self.days:
-            result.append((math.sin((2 * self.pi * day) / self.phases[0]) * 100))
+        for disc in self.discrets:
+            result.append((math.sin((2 * self.pi * disc) / self.phases[0]) * 100))
         return result
 
     def emotional(self):
         result = []
-        for day in self.days:
-            result.append((math.sin((2 * self.pi * day) / self.phases[1]) * 100))
+        for disc in self.discrets:
+            result.append((math.sin((2 * self.pi * disc) / self.phases[1]) * 100))
         return result
 
     def intellectual(self):
         result = []
-        for day in self.days:
-            result.append((math.sin((2 * self.pi * day) / self.phases[2]) * 100))
+        for disc in self.discrets:
+            result.append((math.sin((2 * self.pi * disc) / self.phases[2]) * 100))
         return result
 
     def average(self):
@@ -35,7 +35,7 @@ class Ticks:
         phys = self.physical()
         emo = self.emotional()
         intel = self.intellectual()
-        for i in self.days:
+        for i in self.discrets:
             result.append((phys[i] + emo[i] + intel[i]) / 3)
         return result
 
