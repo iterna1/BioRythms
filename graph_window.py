@@ -1,5 +1,6 @@
 import sys
 
+import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -56,7 +57,7 @@ class MenuTab(QWidget):
     def initUI(self):
         label = self.stl.get_label_style('Добро пожаловать в BioRythms', 36)
         label.setAlignment(Qt.AlignCenter)
-        guide_btn = self.stl.get_button_style('О BioRythms', 42)
+        guide_btn = self.stl.get_button_style('BioRythms', 42)
         bior_btn = self.stl.get_button_style('О биоритмах', 42)
 
         vbox = self.stl.get_box_style(QVBoxLayout, label, guide_btn, bior_btn)
@@ -135,7 +136,7 @@ class GraphTab(QWidget):
         for f, t in zip(statement_forecast_day, statement_today):
             self.gbox_layout.addWidget(f, 6, k)
             self.gbox_layout.addWidget(t, 7, k)
-            k += 1
+            k += 2
 
     def define_vars(self, data):
         self.user_name = data['name'].capitalize()
@@ -176,41 +177,38 @@ class GraphTab(QWidget):
             self.c_avrg = 0
 
     def configure_graph(self):
-        t_c, bg_c, bg_s, g_bg, r_bg, b_bg, k_bg, k_c, b_c, r_c, g_c = ('#F5F5DD' for i in range(11))
-        if self.draw_phys:
-            g_c = '#006400'
-            g_bg = '#8FBC8F'
-        if self.draw_emo:
-            r_c = '#8B0000'
-            r_bg = '#FA8072'
-        if self.draw_intel:
-            b_c = '#483D8B'
-            b_bg = '#B0E0E6'
-        if self.draw_avrg:
-            k_c = 'black'
-            k_bg = '#A9A9A9'
-
-        statement_today = [self.stl.get_button_style('.'.join([str(i) for i in self.current_date]), 14),
+        statement_today = [self.stl.get_button_style('  ' + '.'.join([str(i) for i in self.current_date]) + '  ', 14),
                            self.stl.get_button_style(' %f %s ' % (self.c_phys, '%'), 12,
-                                                     bgc_color=b_bg, bgs_color=g_bg, txt_color=g_c),
+                                                     bgc_color='#8FBC8F', bgs_color='#8FBC8F',
+                                                     txt_color='#006400'),
                            self.stl.get_button_style(' %f %s ' % (self.c_emo, '%'), 12,
-                                                     bgc_color=b_bg, bgs_color=r_bg, txt_color=r_c),
+                                                     bgc_color='#FA8072', bgs_color='#FA8072',
+                                                     txt_color='#8B0000'),
                            self.stl.get_button_style(' %f %s ' % (self.c_intel, '%'), 12,
-                                                     bgc_color=b_bg, bgs_color=b_bg, txt_color=b_c),
+                                                     bgc_color='#B0E0E6', bgs_color='#B0E0E6',
+                                                     txt_color='#483D8B'),
                            self.stl.get_button_style(' %f %s ' % (self.c_avrg, '%'), 12,
-                                                     bgc_color=b_bg, bgs_color=k_bg, txt_color=k_c)]
+                                                     bgc_color='#A9A9A9', bgs_color='#A9A9A9',
+                                                     txt_color='black')]
 
-        statement_forecast_day = [self.stl.get_button_style('.'.join([str(i) for i in self.forecast_date]), 14),
+        statement_forecast_day = [self.stl.get_button_style('  ' + '.'.join([str(i) for i in self.forecast_date]) + '  ', 14),
                                   self.stl.get_button_style(' %f %s ' % (self.f_phys, '%'), 12,
-                                                            bgc_color=b_bg, bgs_color=g_bg, txt_color=g_c),
+                                                            bgc_color='#8FBC8F', bgs_color='#8FBC8F',
+                                                            txt_color='#006400'),
                                   self.stl.get_button_style(' %f %s ' % (self.f_emo, '%'), 12,
-                                                            bgc_color=r_bg, bgs_color=r_bg, txt_color=r_c),
+                                                            bgc_color='#FA8072', bgs_color='#FA8072',
+                                                            txt_color='#8B0000'),
                                   self.stl.get_button_style(' %f %s ' % (self.f_intel, '%'), 12,
-                                                            bgc_color=b_bg, bgs_color=b_bg, txt_color=b_c),
+                                                            bgc_color='#B0E0E6', bgs_color='#B0E0E6',
+                                                            txt_color='#483D8B'),
                                   self.stl.get_button_style(' %f %s ' % (self.f_avrg, '%'), 12,
-                                                            bgc_color=k_bg, bgs_color=k_bg, txt_color=k_c)]
+                                                            bgc_color='#A9A9A9', bgs_color='#A9A9A9',
+                                                            txt_color='black')]
 
         graphics_view = pg.PlotWidget(self)
+        graphics_view.plot(list(range(-10, 0)) + list(self.ticks.discrets) +
+                           list(range(len(self.ticks.discrets), len(self.ticks.discrets) + 10)),
+                           np.zeros(shape=len(self.ticks.discrets) + 20), pen=(165, 42, 42))
         if self.draw_phys:
             graphics_view.plot(self.ticks.discrets, self.ticks.physical(), pen='g')
         if self.draw_emo:
