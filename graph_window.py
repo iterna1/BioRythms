@@ -55,20 +55,14 @@ class MenuTab(QWidget):
         self.initUI()
 
     def initUI(self):
-        label = self.stl.get_label_style('Добро пожаловать в BioRythms', 36)
-        label.setAlignment(Qt.AlignCenter)
-        guide_btn = self.stl.get_button_style('BioRythms', 42)
-        bior_btn = self.stl.get_button_style('О биоритмах', 42)
+        self.label = self.stl.get_button_style('Биоритмы', 36)
+        self.text = self.stl.get_plain_text_line('\tЭта программа предназначена для рассчёта физического, '
+                                                 'эмоционального и интеллектуального состояния человека.\n\t'
+                                                 'Вы можете узнать больше, нажав на соответствующую кнопку сверху.', 30)
+        lines = [self.stl.get_line_style(QFrame.HLine), self.stl.get_line_style(QFrame.HLine)]
 
-        vbox = self.stl.get_box_style(QVBoxLayout, label, guide_btn, bior_btn)
+        vbox = self.stl.get_box_style(QVBoxLayout, lines[0], self.label, lines[1], self.text)
         self.setLayout(vbox)
-        guide_btn.clicked.connect(self.programm_info)
-
-    def programm_info(self):
-        pass
-
-    def biorythms_info(self):
-        pass
 
 
 class SetupTab(QWidget):

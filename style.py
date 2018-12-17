@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget, QLineEdit, QDateEdit, QFrame
+from PyQt5.QtWidgets import QLabel, QPushButton, QCheckBox, QTabWidget, QLineEdit, QDateEdit, QFrame, QPlainTextEdit
 
 
 class Style:
@@ -65,4 +65,10 @@ class Style:
         line.setFrameShadow(QFrame.Sunken)
         return line
 
+    def get_plain_text_line(self, text, font):
+        text = QPlainTextEdit(text)
+        text.setStyleSheet('QPlainTextEdit{color: #4B0082;}')
+        text.setFont(QFont('Calibri', font, QFont.Bold))
+        text.setReadOnly(True)
+        return text
 
