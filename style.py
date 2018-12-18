@@ -67,8 +67,7 @@ class Style:
 
     def get_plain_text_line(self, text, font):
         text = QPlainTextEdit(text)
-        text.setStyleSheet('QPlainTextEdit{color: #4B0082;}')
+        text.setStyleSheet('QPlainTextEdit{color: #483D8B;}')
         text.setFont(QFont('Calibri', font, QFont.Bold))
         text.setReadOnly(True)
         return text
-

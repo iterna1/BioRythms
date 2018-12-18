@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout, QFrame
 from graph_ticks import TimeDelta, Ticks, get_current_date
 from style import Style
@@ -55,14 +55,96 @@ class MenuTab(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.label = self.stl.get_button_style('Биоритмы', 36)
-        self.text = self.stl.get_plain_text_line('\tЭта программа предназначена для рассчёта физического, '
-                                                 'эмоционального и интеллектуального состояния человека.\n\t'
-                                                 'Вы можете узнать больше, нажав на соответствующую кнопку сверху.', 30)
-        lines = [self.stl.get_line_style(QFrame.HLine), self.stl.get_line_style(QFrame.HLine)]
+        self.bio_theory = ['\n\tБиологические ритмы - периодически повторяющиеся изменения характера и интенсивности'
+                           ' биологических процессов и явлений. Они свойственны живой материи на всех уровнях её'
+                           ' организации - от молекулярных и субклеточных до биосферы. Являются фундаментальным'
+                           ' процессом в живой природе. Человек, как биологический объект, в своей ежедневной жизни'
+                           ' подвержен влиянию биологических ритмов в полной мере. Биоритмы воздействуют на все аспекты'
+                           ' его жизнедеятельности: активность, выносливость, уровень иммунитета, мыслительные'
+                           ' способности и прочие качества.\n\tСуществует теория, что человек со дня рождения находится'
+                           ' в трёх биологических ритмах (биоритмах): физическом, эмоциональном и интеллектуальном.'
+                           ' Это не зависит от каких либо других факторов.',
 
-        vbox = self.stl.get_box_style(QVBoxLayout, lines[0], self.label, lines[1], self.text)
+                           '\n\tФизический цикл равен 23 дням. Он определяет энергию человека, его силу, выносливость,'
+                           ' координацию движения. Эмоциональный цикл равен 28 дням и обусловливает состояние'
+                           ' нервной системы и настроение. Интеллектуальный цикл равен 33 дням и определяет'
+                           ' творческую способность личности.\n\tЛюбой из циклов состоит из двух полупериодов,'
+                           ' положительного и отрицательного.\n\tКритические дни, это те дни, когда кривая биоритма'
+                           ' пересекает нулевую отметку. В этот момент влияние данного биоритма на человека имеет'
+                           ' непредсказуемый характер. Если одну и ту же нулевую точку пересекают одновременно две или'
+                           ' три синусоиды, то такие «двойные» или «тройные» критические дни особенно опасны.']
+
+        self.prog_theory = ['\n\n\n\tBioRythms: Версия 1.1.0 | Автор: fortun.ik@yandex.ru\n\n\n\n\n\n\tРуководство'
+                            ' пользователя представлено\n\tна следующей странице.',
+
+                            '\n\tБиоритмы человека - реальная возможность повысить свои способности, возможности,'
+                            ' эффективность своих действий, благодаря заранее определенной линии поведения. Попробуйте'
+                            ' исследовать свои биоритмы, используя BioRythms!\n\tДля того, чтобы получить прогноз на'
+                            ' какую-либо дату вам необходимо:\n— Указать дату вашего рождения.\n— Указать дату прогноза'
+                            ' (Дату, на которую вы планируете получить прогноз. Также является "ограничителем" графика)'
+                            '.\n— Выбрать те биоритмы, значения которых хотите получить (→ биоритмы).\n'
+                            '— Нажать на кнопку "Задать" и перейти во вкладку с графиком (навигационное меню приложения'
+                            ' находится вверху).']
+
+        self.show_bt = False
+        self.show_pt = False
+        self.menu_txt = ['\n\tДобро пожаловать в BioRythms.\n\n'
+                         '\tВ этом меню Вы можете получить\n'
+                         '\tнеобходимую информацию о\n'
+                         '\tбиоритмах или этой программе.']
+
+        self.info1 = self.stl.get_button_style('Биоритмы', 30)
+        self.info2 = self.stl.get_button_style('BioRythms', 30)
+        self.page_num = self.stl.get_button_style('<->', 30, bgs_color='#483D8B', bgc_color='#483D8B')
+        self.text = self.stl.get_plain_text_line(self.menu_txt[0], 30)
+        lines = [self.stl.get_line_style(QFrame.HLine), self.stl.get_line_style(QFrame.HLine)]
+        vbox = self.stl.get_box_style(QGridLayout)
+        vbox.addWidget(lines[0], 0, 0, 1, 5)
+        vbox.addWidget(self.text, 1, 0, 1, 5)
+        # vbox.addWidget(lines[1], 2, 0, 1, 5)
+        vbox.addWidget(self.info1, 3, 0, 1, 2)
+        vbox.addWidget(self.page_num, 3, 2, 1, 1)
+        vbox.addWidget(self.info2, 3, 3, 1, 2)
+
         self.setLayout(vbox)
+        self.info1.clicked.connect(self.show_page)
+        self.info2.clicked.connect(self.show_page)
+        self.page_num.clicked.connect(self.show_page)
+
+    def show_page(self):
+        sender = self.sender()
+        menu = False
+        if sender.text() == 'Биоритмы':
+            info_list = self.bio_theory
+        elif sender.text() == 'BioRythms':
+            info_list = self.prog_theory
+        else:
+            info_list = self.menu_txt
+            menu = True
+        ln = len(info_list)
+        try:
+            if (self.show_bt and sender.text() == 'BioRythms')\
+                    or (self.show_pt and sender.text() == 'Биоритмы')\
+                    or menu:
+                raise ValueError
+            pn = int(self.page_num.text()[0])
+            if pn == ln:
+                raise ValueError
+        except ValueError:
+            pn = 0
+        self.text.setPlainText(info_list[pn])
+        if not menu:
+            self.page_num.setText('%i/%i' % (pn + 1, ln))
+            self.text.setFont(QFont('Arial', 16))
+        else:
+            self.page_num.setText('<->')
+            self.text.setFont(QFont('Calibri', 30, QFont.Bold))
+        if sender.text() == 'Биоритмы':
+            self.show_pt, self.show_bt = False, True
+        elif sender.text() == 'BioRythms':
+            self.show_pt, self.show_bt = True, False
+        else:
+            self.show_pt, self.show_bt = False, False
 
 
 class SetupTab(QWidget):
@@ -124,7 +206,8 @@ class GraphTab(QWidget):
 
     def initUI(self, data):
         self.define_vars(data)
-        statement_forecast_day, statement_today, self.graphics_view = self.configure_graph()
+        self.graphics_view = pg.PlotWidget(self)
+        statement_forecast_day, statement_today = self.configure_graph()
         self.gbox_layout.addWidget(self.graphics_view, 0, 0, 3, 9)
         k = 0
         for f, t in zip(statement_forecast_day, statement_today):
@@ -171,56 +254,61 @@ class GraphTab(QWidget):
             self.c_avrg = 0
 
     def configure_graph(self):
+        g_c = '#8FBC8F'
+        r_c = '#FA8072'
+        be_c = '#B0E0E6'
+        bl_c = '#A9A9A9'
+        if self.draw_phys:
+            g_c = '#006400'
+        if self.draw_emo:
+            r_c = '#8B0000'
+        if self.draw_intel:
+            be_c = '#483D8B'
+        if self.draw_avrg:
+            bl_c = 'black'
         statement_today = [self.stl.get_button_style('  ' + '.'.join([str(i) for i in self.current_date]) + '  ', 14),
                            self.stl.get_button_style(' %f %s ' % (self.c_phys, '%'), 12,
                                                      bgc_color='#8FBC8F', bgs_color='#8FBC8F',
-                                                     txt_color='#006400'),
+                                                     txt_color=g_c),
                            self.stl.get_button_style(' %f %s ' % (self.c_emo, '%'), 12,
                                                      bgc_color='#FA8072', bgs_color='#FA8072',
-                                                     txt_color='#8B0000'),
+                                                     txt_color=r_c),
                            self.stl.get_button_style(' %f %s ' % (self.c_intel, '%'), 12,
                                                      bgc_color='#B0E0E6', bgs_color='#B0E0E6',
-                                                     txt_color='#483D8B'),
+                                                     txt_color=be_c),
                            self.stl.get_button_style(' %f %s ' % (self.c_avrg, '%'), 12,
                                                      bgc_color='#A9A9A9', bgs_color='#A9A9A9',
-                                                     txt_color='black')]
+                                                     txt_color=bl_c)]
 
         statement_forecast_day = [self.stl.get_button_style('  ' + '.'.join([str(i) for i in self.forecast_date]) + '  ', 14),
                                   self.stl.get_button_style(' %f %s ' % (self.f_phys, '%'), 12,
                                                             bgc_color='#8FBC8F', bgs_color='#8FBC8F',
-                                                            txt_color='#006400'),
+                                                            txt_color=g_c),
                                   self.stl.get_button_style(' %f %s ' % (self.f_emo, '%'), 12,
                                                             bgc_color='#FA8072', bgs_color='#FA8072',
-                                                            txt_color='#8B0000'),
+                                                            txt_color=r_c),
                                   self.stl.get_button_style(' %f %s ' % (self.f_intel, '%'), 12,
                                                             bgc_color='#B0E0E6', bgs_color='#B0E0E6',
-                                                            txt_color='#483D8B'),
+                                                            txt_color=be_c),
                                   self.stl.get_button_style(' %f %s ' % (self.f_avrg, '%'), 12,
                                                             bgc_color='#A9A9A9', bgs_color='#A9A9A9',
-                                                            txt_color='black')]
+                                                            txt_color=bl_c)]
 
-        graphics_view = pg.PlotWidget(self)
-        graphics_view.plot(list(range(-10, 0)) + list(self.ticks.discrets) +
+        self.graphics_view.plot(list(range(-10, 0)) + list(self.ticks.discrets) +
                            list(range(len(self.ticks.discrets), len(self.ticks.discrets) + 10)),
                            np.zeros(shape=len(self.ticks.discrets) + 20), pen=(165, 42, 42))
         if self.draw_phys:
-            graphics_view.plot(self.ticks.discrets, self.ticks.physical(), pen='g')
+            self.graphics_view.plot(self.ticks.discrets, self.ticks.physical(), pen='g')
         if self.draw_emo:
-            graphics_view.plot(self.ticks.discrets, self.ticks.emotional(), pen='r')
+            self.graphics_view.plot(self.ticks.discrets, self.ticks.emotional(), pen='r')
         if self.draw_intel:
-            graphics_view.plot(self.ticks.discrets, self.ticks.intellectual(), pen='b')
+            self.graphics_view.plot(self.ticks.discrets, self.ticks.intellectual(), pen='b')
         if self.draw_avrg:
-            graphics_view.plot(self.ticks.discrets, self.ticks.average(), pen='k')
-        return statement_forecast_day, statement_today, graphics_view
+            self.graphics_view.plot(self.ticks.discrets, self.ticks.average(), pen='k')
+        return statement_forecast_day, statement_today
 
     def info(self):
         txt = self.sender().color()
-        if txt == 'Какие?':
-            pass
-        elif txt == 'Куда я попал?':
-            pass
-        else:
-            pass
 
 
 if __name__ == '__main__':
