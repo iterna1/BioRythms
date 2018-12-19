@@ -6,9 +6,19 @@ def get_current_date():
     return list(map(int, str(datetime.datetime.now()).split()[0].split('-')))[::-1]
 
 
+def human_format(p_lst):
+    r_str = ''
+    for i in p_lst:
+        if i < 10:
+            r_str += '0%i.' % i
+        else:
+            r_str += '%i.' % i
+    return r_str.rstrip('.')
+
+
 class Ticks:
     def __init__(self, days):
-        self.discrets = range(0, days)
+        self.discrets = range(days + 1)
         self.pi = math.pi
         self.phases = (23, 28, 33)
 
@@ -57,12 +67,12 @@ class TimeDelta:
 
 
 def main():
-    td = TimeDelta([12, 3, 2002], [16, 12, 2018])
+    td = TimeDelta([1, 1, 1000], [11, 11, 1111])
     days = td.get_delta().days
     now = Ticks(days)
-    print(now.physical())
-    print(now.emotional())
-    print(now.intellectual())
+    print(now.physical()[-1])
+    print(now.emotional()[-1])
+    print(now.intellectual()[-1])
 
 
 if __name__ == '__main__':

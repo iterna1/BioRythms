@@ -5,8 +5,8 @@ import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout, QFrame
-from graph_ticks import TimeDelta, Ticks, get_current_date
 from style import Style
+from time_works import TimeDelta, Ticks, get_current_date, human_format
 
 pg.setConfigOption('background', '#F5F5DC')
 pg.setConfigOption('foreground', '#A52A2A')
@@ -38,13 +38,14 @@ class TableWidget(QWidget):
         self.st = SetupTab()
         self.data = self.st.data
         self.gt = GraphTab(self.data)
+        self.st.check_box[5].clicked.connect(self.change_graph)
         tabs = self.stl.get_tab_style({'Меню': self.mt, 'Параметры': self.st, 'Результат': self.gt})
         layout = self.stl.get_box_style(QVBoxLayout, tabs)
         self.setLayout(layout)
-        self.st.check_box[5].clicked.connect(self.change_graph)
 
     def change_graph(self):
         self.data = self.st.data
+        self.gt.graphics_view.close()
         self.gt.initUI(self.data)
 
 
@@ -77,14 +78,15 @@ class MenuTab(QWidget):
         self.prog_theory = ['\n\n\n\tBioRythms: Версия 1.1.0 | Автор: fortun.ik@yandex.ru\n\n\n\n\n\n\tРуководство'
                             ' пользователя представлено\n\tна следующей странице.',
 
-                            '\n\tБиоритмы человека - реальная возможность повысить свои способности, возможности,'
+                            '\tБиоритмы человека - реальная возможность повысить свои способности, возможности,'
                             ' эффективность своих действий, благодаря заранее определенной линии поведения. Попробуйте'
                             ' исследовать свои биоритмы, используя BioRythms!\n\tДля того, чтобы получить прогноз на'
-                            ' какую-либо дату вам необходимо:\n— Указать дату вашего рождения.\n— Указать дату прогноза'
-                            ' (Дату, на которую вы планируете получить прогноз. Также является "ограничителем" графика)'
-                            '.\n— Выбрать те биоритмы, значения которых хотите получить (→ биоритмы).\n'
+                            ' какую-либо дату необходимо:\n— Указать дату рождения.\n— Указать дату прогноза.'
+                            ' (Дату, на которую Вы планируете получить прогноз. Также является "ограничителем" графика)'
+                            '.\n— Выбрать те биоритмы, значения которых хотите получить (см. Биоритмы).\n'
                             '— Нажать на кнопку "Задать" и перейти во вкладку с графиком (навигационное меню приложения'
-                            ' находится вверху).']
+                            ' находится вверху).\n'
+                            '— По желанию можно нажать на полученный результат, чтобы программа проанализировала его']
 
         self.show_bt = False
         self.show_pt = False
@@ -101,10 +103,9 @@ class MenuTab(QWidget):
         vbox = self.stl.get_box_style(QGridLayout)
         vbox.addWidget(lines[0], 0, 0, 1, 5)
         vbox.addWidget(self.text, 1, 0, 1, 5)
-        # vbox.addWidget(lines[1], 2, 0, 1, 5)
-        vbox.addWidget(self.info1, 3, 0, 1, 2)
-        vbox.addWidget(self.page_num, 3, 2, 1, 1)
-        vbox.addWidget(self.info2, 3, 3, 1, 2)
+        vbox.addWidget(self.info1, 2, 0, 1, 2)
+        vbox.addWidget(self.page_num, 2, 2, 1, 1)
+        vbox.addWidget(self.info2, 2, 3, 1, 2)
 
         self.setLayout(vbox)
         self.info1.clicked.connect(self.show_page)
@@ -161,12 +162,12 @@ class SetupTab(QWidget):
                           self.stl.get_checkbox_style(' Интеллектуальный биоритм', 18, 'blue'),
                           self.stl.get_checkbox_style(' Среднее значение', 18, 'black'),
                           self.stl.get_button_style('Задать', 18)]
-        self.edit_box = [self.stl.get_button_style('Ваше имя:', 18),
-                         self.stl.get_line_edit_style(18),
-                         self.stl.get_button_style('[*]Дата рождения: ', 18),
-                         self.stl.get_date_edit_style(18),
-                         self.stl.get_button_style('[*]Дата прогноза:', 18),
-                         self.stl.get_date_edit_style(18)]
+        self.edit_box = [self.stl.get_button_style('Ваше имя:', 20),
+                         self.stl.get_line_edit_style(16),
+                         self.stl.get_button_style('[*]Дата рождения: ', 20),
+                         self.stl.get_date_edit_style(20),
+                         self.stl.get_button_style('[*]Дата прогноза:', 20),
+                         self.stl.get_date_edit_style(20)]
         lines = [self.stl.get_line_style(QFrame.HLine),
                  self.stl.get_line_style(QFrame.VLine),
                  self.stl.get_line_style(QFrame.HLine)]
@@ -199,21 +200,41 @@ class SetupTab(QWidget):
 class GraphTab(QWidget):
     def __init__(self, data):
         super().__init__()
+        self.data = data
         self.define_vars(data)
         self.stl = Style(self)
         self.gbox_layout = self.stl.get_box_style(QGridLayout)
         self.initUI(data)
 
     def initUI(self, data):
-        self.define_vars(data)
-        self.graphics_view = pg.PlotWidget(self)
-        statement_forecast_day, statement_today = self.configure_graph()
+        try:
+            data['name']
+        except TypeError:
+            self.graphics_view = data
+            self.show_graph = False
+        else:
+            self.graphics_view = pg.PlotWidget(self)
+            self.define_vars(data)
+            self.show_graph = True
+            self.data = data
+        self.statement_forecast_day, self.statement_today = self.configure_graph()
         self.gbox_layout.addWidget(self.graphics_view, 0, 0, 3, 9)
         k = 0
-        for f, t in zip(statement_forecast_day, statement_today):
+        for f, t in zip(self.statement_forecast_day, self.statement_today):
             self.gbox_layout.addWidget(f, 6, k)
             self.gbox_layout.addWidget(t, 7, k)
             k += 2
+
+        self.statement_today[0].clicked.connect(self.info)
+        self.statement_today[1].clicked.connect(self.info)
+        self.statement_today[2].clicked.connect(self.info)
+        self.statement_today[3].clicked.connect(self.info)
+        self.statement_today[4].clicked.connect(self.info)
+        self.statement_forecast_day[0].clicked.connect(self.info)
+        self.statement_forecast_day[1].clicked.connect(self.info)
+        self.statement_forecast_day[2].clicked.connect(self.info)
+        self.statement_forecast_day[3].clicked.connect(self.info)
+        self.statement_forecast_day[4].clicked.connect(self.info)
 
     def define_vars(self, data):
         self.user_name = data['name'].capitalize()
@@ -266,7 +287,7 @@ class GraphTab(QWidget):
             be_c = '#483D8B'
         if self.draw_avrg:
             bl_c = 'black'
-        statement_today = [self.stl.get_button_style('  ' + '.'.join([str(i) for i in self.current_date]) + '  ', 14),
+        statement_today = [self.stl.get_button_style(' %s ' % human_format(self.current_date), 14),
                            self.stl.get_button_style(' %f %s ' % (self.c_phys, '%'), 12,
                                                      bgc_color='#8FBC8F', bgs_color='#8FBC8F',
                                                      txt_color=g_c),
@@ -280,7 +301,7 @@ class GraphTab(QWidget):
                                                      bgc_color='#A9A9A9', bgs_color='#A9A9A9',
                                                      txt_color=bl_c)]
 
-        statement_forecast_day = [self.stl.get_button_style('  ' + '.'.join([str(i) for i in self.forecast_date]) + '  ', 14),
+        statement_forecast_day = [self.stl.get_button_style(' %s ' % human_format(self.forecast_date), 14),
                                   self.stl.get_button_style(' %f %s ' % (self.f_phys, '%'), 12,
                                                             bgc_color='#8FBC8F', bgs_color='#8FBC8F',
                                                             txt_color=g_c),
@@ -294,21 +315,153 @@ class GraphTab(QWidget):
                                                             bgc_color='#A9A9A9', bgs_color='#A9A9A9',
                                                             txt_color=bl_c)]
 
-        self.graphics_view.plot(list(range(-10, 0)) + list(self.ticks.discrets) +
-                           list(range(len(self.ticks.discrets), len(self.ticks.discrets) + 10)),
-                           np.zeros(shape=len(self.ticks.discrets) + 20), pen=(165, 42, 42))
-        if self.draw_phys:
-            self.graphics_view.plot(self.ticks.discrets, self.ticks.physical(), pen='g')
-        if self.draw_emo:
-            self.graphics_view.plot(self.ticks.discrets, self.ticks.emotional(), pen='r')
-        if self.draw_intel:
-            self.graphics_view.plot(self.ticks.discrets, self.ticks.intellectual(), pen='b')
-        if self.draw_avrg:
-            self.graphics_view.plot(self.ticks.discrets, self.ticks.average(), pen='k')
+        try:
+            self.graphics_view.plot(list(range(-10, 0)) + list(self.ticks.discrets) +
+                                    list(range(len(self.ticks.discrets), len(self.ticks.discrets) + 10)),
+                                    np.zeros(shape=len(self.ticks.discrets) + 20), pen=(165, 42, 42))
+        except Exception as e:
+            pass
+        else:
+            if self.draw_phys:
+                self.graphics_view.plot(self.ticks.discrets, self.ticks.physical(), pen='g')
+            if self.draw_emo:
+                self.graphics_view.plot(self.ticks.discrets, self.ticks.emotional(), pen='r')
+            if self.draw_intel:
+                self.graphics_view.plot(self.ticks.discrets, self.ticks.intellectual(), pen='b')
+            if self.draw_avrg:
+                self.graphics_view.plot(self.ticks.discrets, self.ticks.average(), pen='k')
         return statement_forecast_day, statement_today
 
     def info(self):
-        txt = self.sender().color()
+        sender = self.sender()
+        if not self.show_graph:
+            self.initUI(self.data)
+            self.show_graph = True
+        else:
+            self.graphics_view.close()
+            self.show_graph = False
+
+            text = self.get_sender_info(sender)  # получаем информацию по конкретной кнопке
+            self.initUI(text)
+
+    def get_sender_info(self, sender):
+        if self.user_name != '':
+            name = '%s, ' % self.user_name
+        else:
+            name = ''
+        # Если сегодняшняя дата
+        if sender == self.statement_today[0]:
+            txt = self.stl.get_plain_text_line(('%sэто сегодняшняя дата. \n\n\n\n\n\n[Нажми на кнопку ещё раз, чтобы'
+                                                ' увидеть график]' % name).capitalize(), 24)
+            txt.setFont(QFont('Arial', 24))
+            return txt
+        # Если дата прогноза
+        elif sender == self.statement_forecast_day[0]:
+            txt = self.stl.get_plain_text_line(('%sэто та дата, которую ты выбрал в качестве "даты прогноза" в'
+                                                ' предыдущем меню.\n\n\n\n\n[Нажми на кнопку ещё раз, чтобы увидеть'
+                                                ' график]'
+                                                % name).capitalize(), 24)
+            txt.setFont(QFont('Arial', 24))
+            return txt
+        # Если это не кнопки с датами
+        else:
+            # Определяем состояние данного биоритма
+            num = float(sender.text()[1:-2])
+            positive, negative, neutral = False, False, False
+            if num > 0:
+                positive = True
+            elif num < 0:
+                negative = True
+            else:
+                neutral = True
+            # Определяем информацию по биоритму
+            if sender in (self.statement_today[1], self.statement_forecast_day[1]):  # Физический
+                if positive:
+                    txt = self.stl.get_plain_text_line('Положительная фаза физического биоритма — благоприятный период'
+                                                       ' для занятий, связанных с физической нагрузкой.  Максимальная'
+                                                       ' энергия, сила, выносливость, наивысшая устойчивость к'
+                                                       ' воздействию экстремальных факторов. Вы бодры, энергичны и ваша'
+                                                       ' физическая активность высока.\n\n\n[Нажми на кнопку ещё раз,'
+                                                       ' чтобы увидеть график]', 22)
+                elif negative:
+                    txt = self.stl.get_plain_text_line('В отрицательной фазе физического биоритма Вы чувствуете упадок'
+                                                       ' физических сил. Работа, какой бы легкой она ни была, утомляет.'
+                                                       ' Пониженный физический тонус, быстрая утомляемость, некоторое'
+                                                       ' снижение сопротивляемости организма к заболеваниям. Ваше'
+                                                       ' физическое состояние оставляет желать лучшего. После обеда вас'
+                                                       ' одолевает сонливость.\n[Нажми на кнопку ещё раз, чтобы увидеть'
+                                                       ' график]', 22)
+                elif neutral:
+                    txt = self.stl.get_plain_text_line('Критические дни физического биоритма обычно проявляются в'
+                                                       ' резкой перемене самочувствия. Нестабильность физического'
+                                                       ' состояния. Существует вероятность травм, аварий, обострений'
+                                                       ' хронических заболеваний, головной боли. Проявляя физическую'
+                                                       ' активность мы не обращаем внимания на появившиеся болевые'
+                                                       ' ощущения и дискомфорт. Между тем, это — сигналы о'
+                                                       ' неблагополучии, чреватом риском получения серьезной травмы.\n'
+                                                       '[Нажми на кнопку ещё раз, чтобы увидеть график]',
+                                                       22)
+
+                txt.setFont(QFont('Arial', 22))
+                return txt
+            elif sender in (self.statement_today[2], self.statement_forecast_day[2]):  # Эмоциональный
+                if positive:
+                    txt = self.stl.get_plain_text_line('Положительную фазу эмоционального биоритма можно'
+                                                       ' охарактеризовать такими словами как, энтузиазм и отличное'
+                                                       ' настроение. Вам удается без особых усилий регулировать'
+                                                       ' эмоциональное состояние и блокировать попытки внешнего'
+                                                       ' психологического давления. Вы открыты для общения и способны'
+                                                       ' адекватно воспринимать собеседников.\n\n[Нажми на кнопку ещё'
+                                                       ' раз, чтобы увидеть график]', 22)
+                elif negative:
+                    txt = self.stl.get_plain_text_line('В отрицательной фазе эмоционального биоритма вы будете'
+                                                       ' становиться менее общительным, но более унылым,'
+                                                       ' раздражительным и чувствительным к вещам, которые обычно вас'
+                                                       ' особо не тревожили. Повышенная напряженность, часто плохое'
+                                                       ' настроение. Негативные эмоции берут верх над разумом. Это'
+                                                       ' период, когда человек особенно склонен оказываться в неловких'
+                                                       ' ситуациях.\n[Нажми на кнопку ещё раз, чтобы увидеть график]', 22)
+                elif neutral:
+                    txt = self.stl.get_plain_text_line('В критические дни эмоционального биоритма вы склонны к'
+                                                       ' неуместным шуткам и резким замечаниям. Эмоциональная'
+                                                       ' неустойчивость, склонность к снижению реакций, угнетенному'
+                                                       ' состоянию, ссорам. Что-то не так и вы впадаете в бешенство,'
+                                                       ' когда биоритм меняется на отрицательную фазу. Ваши шутки'
+                                                       ' вызывают обиду, малейшие замечания в вашу сторону вызывают'
+                                                       ' встречную агрессию и т.д.\n\n[Нажми на кнопку ещё раз, чтобы'
+                                                       ' увидеть график]', 22)
+                txt.setFont(QFont('Arial', 22))
+                return txt
+            elif sender in (self.statement_today[3], self.statement_forecast_day[3]):  # Интеллектуальный
+                if positive:
+                    txt = self.stl.get_plain_text_line('В положительной фазе интеллектуального биоритма вами руководит'
+                                                       ' здравый смысл и у вас один шаг до гениальности. Вы чувствуете'
+                                                       ' себя в прекрасной творческой форме, вам хочется поупражнять'
+                                                       ' свой, как вы считаете, недостаточно загруженный мозг.'
+                                                       ' Интеллектуальное состояние достигает наивысшего уровня,'
+                                                       ' простые задачи решаются легко и без раздумий.\n'
+                                                       '[Нажми на кнопку ещё раз, чтобы увидеть график]', 22)
+                elif negative:
+                    txt = self.stl.get_plain_text_line('В негативной фазе интеллектуального биоритма умственная'
+                                                       ' деятельность замедляется. Процесс мышления вялый, прерывистый.'
+                                                       ' Восприятие тускнеет, заметно отсутствие концентрации, а'
+                                                       ' решение даже простых задач требует серьезных усилий.\n\n\n\n'
+                                                       '[Нажми на кнопку ещё раз, чтобы увидеть график]', 22)
+                elif neutral:
+                    txt = self.stl.get_plain_text_line('В критические дни интеллектуального биоритма мыслительные'
+                                                       ' способности человека могут сыграть с ним злую шутку.'
+                                                       ' Склонность к снижению внимания, ошибочным заключениям,'
+                                                       ' ухудшению запоминания. В эти дни лучше воздержаться от'
+                                                       ' принятия ответственных решений.\n\n\n[Нажми на кнопку ещё раз,'
+                                                       ' чтобы увидеть график]', 22)
+                txt.setFont(QFont('Arial', 22))
+                return txt
+            elif sender in (self.statement_today[4], self.statement_forecast_day[4]):  # Среднее значение
+                txt = self.stl.get_plain_text_line('Среднее значение трёх биоритмов: физического, эмоционального и'
+                                                   ' интелектуального\n\n\n\n\n\n\n[Нажми на кнопку ещё раз, чтобы'
+                                                   ' увидеть график]', 22)
+                txt.setFont(QFont('Arial', 22))
+                return txt
 
 
 if __name__ == '__main__':
